@@ -7,6 +7,7 @@ import './App.scss';
 import { peopleFromServer } from './data/people';
 import { Person } from './types/Person';
 import { DropdownMenu } from './components/DropdownMenu';
+import { SearchInput } from './components/SearchInput';
 
 export const App: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -15,7 +16,12 @@ export const App: React.FC = () => {
   const [isFocused, setIsFocused] = useState(false);
   const [title, setTitle] = useState('No selected person');
 
-  const applyQuery = useCallback(debounce(setAppliedQuery, 300), []);
+  const debouncedHandleQueryChange = useCallback(
+    debounce((value: string) => {
+      setAppliedQuery(value);
+    }, 300),
+    [],
+  );
 
   useEffect(() => {
     if (selectedPerson && query === selectedPerson.name) {
@@ -28,15 +34,17 @@ export const App: React.FC = () => {
   }, [selectedPerson, query]);
 
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value);
-    applyQuery(event.target.value);
+    const { value } = event.target;
+
+    setQuery(value);
+    debouncedHandleQueryChange(value);
   };
 
-  const handleClearInput = () => {
+  const handleClearInput = useCallback(() => {
     setQuery('');
     setSelectedPerson(null);
-    applyQuery('');
-  };
+    setAppliedQuery('');
+  }, []);
 
   const filteredNames = useMemo(() => {
     return peopleFromServer.filter(person =>
@@ -62,32 +70,12 @@ export const App: React.FC = () => {
             'is-active': isFocused && filteredNames.length > 0,
           })}
         >
-          <div className="dropdown-trigger field has-addons">
-            <div className="control is-expanded">
-              <input
-                type="text"
-                placeholder="Enter a part of the name"
-                className="input"
-                data-cy="search-input"
-                value={query}
-                onChange={handleQueryChange}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-              />
-            </div>
-            {query && (
-              <div className="control">
-                <button
-                  className="button is-light"
-                  onClick={handleClearInput}
-                  data-cy="clear-button"
-                >
-                  Clear
-                </button>
-              </div>
-            )}
-          </div>
-
+          <SearchInput
+            query={query}
+            setIsFocused={setIsFocused}
+            handleQueryChange={handleQueryChange}
+            handleClearInput={handleClearInput}
+          />
           <DropdownMenu filteredNames={filteredNames} onSelected={onSelected} />
         </div>
 

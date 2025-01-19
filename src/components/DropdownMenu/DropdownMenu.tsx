@@ -15,9 +15,10 @@ export const DropdownMenu: React.FC<Props> = ({
         {filteredNames.map(person => (
           <div
             key={person.slug}
+            tabIndex={0}
             className="dropdown-item"
             data-cy="suggestion-item"
-            onMouseDown={() => onSelected(person)}
+            onClick={() => onSelected(person)}
             onMouseEnter={e => {
               e.currentTarget.classList.add('has-background-primary-90');
             }}
